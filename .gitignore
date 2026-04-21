@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Data files
+data/
+*.json
+*.xlsx
+*.csv
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Streamlit secrets
+.streamlit/secrets.toml
