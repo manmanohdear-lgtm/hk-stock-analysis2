@@ -347,32 +347,62 @@ def perform_search(code):
 # ==================== 初始化 Session State ====================
 if 'page' not in st.session_state:
     st.session_state.page = "📋 每日工作流"
-if 'screening_results' not in st.session_state:
-    st.session_state.screening_results = None
-if 'current_stock' not in st.session_state:
-    st.session_state.current_stock = ""
-if 'search_history' not in st.session_state:
-    st.session_state.search_history = []
+if 'trade_date' not in st.session_state:
+    st.session_state.trade_date = datetime.now().date()
 if 'hk_stock_name' not in st.session_state:
     st.session_state.hk_stock_name = ""
 if 'hk_stock_price' not in st.session_state:
     st.session_state.hk_stock_price = 0.0
+if 'hk_stock_volume' not in st.session_state:
+    st.session_state.hk_stock_volume = 0
 if 'hk_stock_turnover' not in st.session_state:
     st.session_state.hk_stock_turnover = 0.0
-if 'tech_data' not in st.session_state:
-    st.session_state.tech_data = None
+if 'short_volume' not in st.session_state:
+    st.session_state.short_volume = 0
+if 'short_turnover' not in st.session_state:
+    st.session_state.short_turnover = 0.0
+
+# 🆕 移動平均線
+if 'ma5' not in st.session_state:
+    st.session_state.ma5 = ""
 if 'ma10' not in st.session_state:
     st.session_state.ma10 = ""
+if 'ma15' not in st.session_state:
+    st.session_state.ma15 = ""
 if 'ma20' not in st.session_state:
     st.session_state.ma20 = ""
 if 'ma50' not in st.session_state:
     st.session_state.ma50 = ""
+if 'ma60' not in st.session_state:
+    st.session_state.ma60 = ""
+if 'ma250' not in st.session_state:
+    st.session_state.ma250 = ""
+
+# 🆕 布林帶
+if 'boll_upper' not in st.session_state:
+    st.session_state.boll_upper = ""
+if 'boll_mid' not in st.session_state:
+    st.session_state.boll_mid = ""
+if 'boll_lower' not in st.session_state:
+    st.session_state.boll_lower = ""
+
+# 🆕 RSI
+if 'rsi6' not in st.session_state:
+    st.session_state.rsi6 = ""
 if 'rsi14' not in st.session_state:
     st.session_state.rsi14 = ""
+if 'rsi24' not in st.session_state:
+    st.session_state.rsi24 = ""
+
+# 🆕 MACD
 if 'macd_dif' not in st.session_state:
     st.session_state.macd_dif = ""
 if 'macd_dea' not in st.session_state:
     st.session_state.macd_dea = ""
+if 'macd_hist' not in st.session_state:
+    st.session_state.macd_hist = ""
+
+# 🆕 KDJ
 if 'kdj_k' not in st.session_state:
     st.session_state.kdj_k = ""
 if 'kdj_d' not in st.session_state:
@@ -380,6 +410,27 @@ if 'kdj_d' not in st.session_state:
 if 'kdj_j' not in st.session_state:
     st.session_state.kdj_j = ""
 
+if 'screening_results' not in st.session_state:
+    st.session_state.screening_results = None
+if 'chart_data' not in st.session_state:
+    st.session_state.chart_data = None
+if 'current_stock' not in st.session_state:
+    st.session_state.current_stock = ""
+if 'search_history' not in st.session_state:
+    st.session_state.search_history = []
+if 'batch_purchases' not in st.session_state:
+    st.session_state.batch_purchases = []
+if 'fetch_trigger' not in st.session_state:
+    st.session_state.fetch_trigger = False
+if 'watchlist_data' not in st.session_state:
+    st.session_state.watchlist_data = {}
+if 'daily_selected_stock' not in st.session_state:
+    st.session_state.daily_selected_stock = None
+if 'daily_screening_df' not in st.session_state:
+    st.session_state.daily_screening_df = None
+if 'tech_data' not in st.session_state:
+    st.session_state.tech_data = None
+    
 # ==================== 側邊欄 ====================
 with st.sidebar:
     st.image("https://img.icons8.com/color/96/000000/stock.png", width=50)
