@@ -895,13 +895,13 @@ def run_screening(progress_bar, status_text):
     stocks['成交额'] = pd.to_numeric(stocks['成交额'], errors='coerce')
     stocks['最新价'] = pd.to_numeric(stocks['最新价'], errors='coerce')
     stocks = stocks[(stocks['成交额'] > 30000000) & (stocks['最新价'] > 1)]
-
-        stocks = stocks[(stocks['成交额'] > 30000000) & (stocks['最新价'] > 1)]
     
-    if stocks.empty:
-        status_text.text("沒有符合基本條件的股票")
-        return pd.DataFrame()
-        
+    # 雲端版：限制分析數量，避免記憶體不足
+    MAX_ANALYSIS = 10
+    if len(stocks) > MAX_ANALYSIS:
+        stocks = stocks.head(MAX_ANALYSIS)
+        status_text.text(f"⚠️ 限制分析 {MAX_ANALYSIS} 隻股票")
+    
     if stocks.empty:
         status_text.text("沒有符合基本條件的股票")
         return pd.DataFrame()
@@ -982,7 +982,7 @@ def run_screening(progress_bar, status_text):
     status_text.text(f"完成! 找到 {len(results)} 隻")
     
     return pd.DataFrame(results[:200])
-
+    
 # ==================== 載入/儲存函數 ====================
 def load_watchlist():
     if os.path.exists(WATCHLIST_FILE):
