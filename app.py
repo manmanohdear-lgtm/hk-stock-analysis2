@@ -445,7 +445,7 @@ if st.session_state.page == "📋 每日工作流":
                     st.success("已儲存！")
                     st.rerun()
 
-# ==================== 1. 港股分析頁面（完整版）====================
+# ==================== 港股分析頁面（優化版）====================
 elif st.session_state.page == "🔍 港股分析":
     st.markdown("""
     <div style="text-align:center; padding:1rem; background:linear-gradient(135deg,#667eea,#764ba2); border-radius:10px; margin-bottom:2rem">
@@ -454,11 +454,12 @@ elif st.session_state.page == "🔍 港股分析":
     </div>
     """, unsafe_allow_html=True)
     
+    # ========== 股票搜尋 ==========
     col1, col2 = st.columns([3, 1])
     with col1:
         code = st.text_input("股票代碼", placeholder="例如：00700、09988", key="stock_code_input")
     with col2:
-        if st.button("🔍 載入", type="primary", use_container_width=True):
+        if st.button("🔍 載入數據", type="primary", use_container_width=True):
             if code:
                 perform_search(code)
     
@@ -466,100 +467,204 @@ elif st.session_state.page == "🔍 港股分析":
         st.caption(f"當前股票: {st.session_state.current_stock}")
     st.divider()
     
+    # ========== 基本數據 ==========
     st.subheader("📊 基本數據")
-    col1, col2 = st.columns(2)
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        stock_name = st.text_input("股票名稱", value=st.session_state.hk_stock_name, placeholder="例如: 騰訊控股")
+        stock_name = st.text_input("股票名稱", value=st.session_state.hk_stock_name, placeholder="例如: 騰訊控股", key="stock_name")
         st.session_state.hk_stock_name = stock_name
     with col2:
-        price = st.number_input("股價 (港元)", value=st.session_state.hk_stock_price if st.session_state.hk_stock_price > 0 else None, step=0.1, format="%.3f", placeholder="請輸入股價")
+        price = st.number_input("股價 (港元)", value=None, step=None, format="%.3f", placeholder="請輸入股價", key="price")
         if price is not None:
             st.session_state.hk_stock_price = price
+    with col3:
+        volume = st.number_input("成交量 (萬股)", value=None, step=None, format="%.3f", placeholder="請輸入成交量", key="volume")
+        if volume is not None:
+            st.session_state.hk_stock_volume = int(volume * 10000) if volume else 0
+    with col4:
+        turnover = st.number_input("成交額 (億)", value=None, step=None, format="%.3f", placeholder="請輸入成交額", key="turnover")
+        if turnover is not None:
+            st.session_state.hk_stock_turnover = turnover
+    with col5:
+        st.caption("52週高/低")
+        high_52w = st.number_input("52週高", value=None, step=None, format="%.3f", placeholder="高", key="high_52w", label_visibility="collapsed")
+        low_52w = st.number_input("52週低", value=None, step=None, format="%.3f", placeholder="低", key="low_52w", label_visibility="collapsed")
+    
+    st.caption("💡 做空數據（選填）")
+    col1, col2 = st.columns(2)
+    with col1:
+        short_volume = st.number_input("做空成交量 (萬股)", value=None, step=None, format="%.3f", placeholder="選填", key="short_volume")
+    with col2:
+        short_turnover = st.number_input("做空成交額 (億)", value=None, step=None, format="%.3f", placeholder="選填", key="short_turnover")
     
     st.divider()
     
-    st.subheader("📊 技術指標（可手動輸入）")
-    col1, col2, col3 = st.columns(3)
+    # ========== 移動平均線 MA ==========
+    st.subheader("📈 移動平均線 (MA)")
+    st.caption("💡 直接輸入數字，按 Tab 跳到下一欄")
     
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     with col1:
-        st.markdown("**📈 移動平均線**")
-        ma10 = st.text_input("MA10", value=st.session_state.ma10, placeholder="例如: 510.200")
-        ma20 = st.text_input("MA20", value=st.session_state.ma20, placeholder="例如: 502.700")
-        ma50 = st.text_input("MA50", value=st.session_state.ma50, placeholder="例如: 495.300")
-    
+        ma5 = st.text_input("MA5", value=st.session_state.ma5, placeholder="0", key="ma5")
     with col2:
-        st.markdown("**📊 RSI / MACD**")
-        rsi14 = st.text_input("RSI(14)", value=st.session_state.rsi14, placeholder="例如: 62.5")
-        macd_dif = st.text_input("MACD DIF", value=st.session_state.macd_dif, placeholder="例如: 1.234")
-        macd_dea = st.text_input("MACD DEA", value=st.session_state.macd_dea, placeholder="例如: 1.123")
-    
+        ma10 = st.text_input("MA10", value=st.session_state.ma10, placeholder="0", key="ma10")
     with col3:
-        st.markdown("**📈 KDJ**")
-        kdj_k = st.text_input("KDJ_K", value=st.session_state.kdj_k, placeholder="例如: 75.2")
-        kdj_d = st.text_input("KDJ_D", value=st.session_state.kdj_d, placeholder="例如: 72.5")
-        kdj_j = st.text_input("KDJ_J", value=st.session_state.kdj_j, placeholder="例如: 80.6")
+        ma15 = st.text_input("MA15", value=st.session_state.ma15, placeholder="0", key="ma15")
+    with col4:
+        ma20 = st.text_input("MA20", value=st.session_state.ma20, placeholder="0", key="ma20")
+    with col5:
+        ma50 = st.text_input("MA50", value=st.session_state.ma50, placeholder="0", key="ma50")
+    with col6:
+        ma60 = st.text_input("MA60", value=st.session_state.ma60, placeholder="0", key="ma60")
+    with col7:
+        ma250 = st.text_input("MA250", value=st.session_state.ma250, placeholder="0", key="ma250")
     
-    # 如果有自動抓取的技術數據，自動填入
-    if st.session_state.tech_data:
-        tech = st.session_state.tech_data
-        if not ma10:
-            ma10 = str(round(tech.get('ma10', 0), 2))
-        if not ma20:
-            ma20 = str(round(tech.get('ma20', 0), 2))
-        if not ma50:
-            ma50 = str(round(tech.get('ma50', 0), 2))
-        if not rsi14:
-            rsi14 = str(round(tech.get('rsi14', 0), 1))
-        if not macd_dif:
-            macd_dif = str(round(tech.get('macd_dif', 0), 4))
-        if not macd_dea:
-            macd_dea = str(round(tech.get('macd_dea', 0), 4))
-        if not kdj_k:
-            kdj_k = str(round(tech.get('kdj_k', 0), 1))
-        if not kdj_d:
-            kdj_d = str(round(tech.get('kdj_d', 0), 1))
-        if not kdj_j:
-            kdj_j = str(round(tech.get('kdj_j', 0), 1))
+    st.divider()
     
+    # ========== 布林帶 BOLL ==========
+    st.subheader("📊 布林帶 (BOLL 20,2)")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        boll_upper = st.text_input("BOLL上軌", value=st.session_state.boll_upper, placeholder="0", key="boll_upper")
+    with col2:
+        boll_mid = st.text_input("BOLL中軌", value=st.session_state.boll_mid, placeholder="0", key="boll_mid")
+    with col3:
+        boll_lower = st.text_input("BOLL下軌", value=st.session_state.boll_lower, placeholder="0", key="boll_lower")
+    
+    st.divider()
+    
+    # ========== RSI ==========
+    st.subheader("📊 RSI (相對強弱指數)")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        rsi6 = st.text_input("RSI(6)", value=st.session_state.rsi6, placeholder="0", key="rsi6")
+    with col2:
+        rsi14 = st.text_input("RSI(14)", value=st.session_state.rsi14, placeholder="0", key="rsi14")
+    with col3:
+        rsi24 = st.text_input("RSI(24)", value=st.session_state.rsi24, placeholder="0", key="rsi24")
+    
+    st.divider()
+    
+    # ========== MACD ==========
+    st.subheader("📉 MACD (12,26,9)")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        macd_dif = st.text_input("DIF", value=st.session_state.macd_dif, placeholder="0", key="macd_dif")
+    with col2:
+        macd_dea = st.text_input("DEA", value=st.session_state.macd_dea, placeholder="0", key="macd_dea")
+    with col3:
+        macd_hist = st.text_input("MACD柱", value=st.session_state.macd_hist, placeholder="0", key="macd_hist")
+    
+    st.divider()
+    
+    # ========== KDJ ==========
+    st.subheader("📈 KDJ (9,3,3)")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        kdj_k = st.text_input("K值", value=st.session_state.kdj_k, placeholder="0", key="kdj_k")
+    with col2:
+        kdj_d = st.text_input("D值", value=st.session_state.kdj_d, placeholder="0", key="kdj_d")
+    with col3:
+        kdj_j = st.text_input("J值", value=st.session_state.kdj_j, placeholder="0", key="kdj_j")
+    
+    st.divider()
+    
+    # ========== 儲存所有輸入值 ==========
+    st.session_state.ma5 = ma5
     st.session_state.ma10 = ma10
+    st.session_state.ma15 = ma15
     st.session_state.ma20 = ma20
     st.session_state.ma50 = ma50
+    st.session_state.ma60 = ma60
+    st.session_state.ma250 = ma250
+    st.session_state.boll_upper = boll_upper
+    st.session_state.boll_mid = boll_mid
+    st.session_state.boll_lower = boll_lower
+    st.session_state.rsi6 = rsi6
     st.session_state.rsi14 = rsi14
+    st.session_state.rsi24 = rsi24
     st.session_state.macd_dif = macd_dif
     st.session_state.macd_dea = macd_dea
+    st.session_state.macd_hist = macd_hist
     st.session_state.kdj_k = kdj_k
     st.session_state.kdj_d = kdj_d
     st.session_state.kdj_j = kdj_j
     
+    # ========== 解析數值 ==========
     p = st.session_state.hk_stock_price
+    ma5_num = parse_number(ma5)
+    ma10_num = parse_number(ma10)
+    ma15_num = parse_number(ma15)
     ma20_num = parse_number(ma20)
+    ma50_num = parse_number(ma50)
+    ma60_num = parse_number(ma60)
+    ma250_num = parse_number(ma250)
+    boll_upper_num = parse_number(boll_upper)
+    boll_mid_num = parse_number(boll_mid)
+    boll_lower_num = parse_number(boll_lower)
+    r6 = parse_number(rsi6)
     r14 = parse_number(rsi14)
+    r24 = parse_number(rsi24)
     dif = parse_number(macd_dif)
     dea = parse_number(macd_dea)
-    to = st.session_state.hk_stock_turnover
-    bias20 = (p - ma20_num) / ma20_num * 100 if ma20_num > 0 else 0
+    hist = parse_number(macd_hist)
     kk = parse_number(kdj_k)
     dd = parse_number(kdj_d)
+    jj = parse_number(kdj_j)
+    to = st.session_state.hk_stock_turnover
+    sv = parse_number(short_volume) if short_volume else 0
+    sto = parse_number(short_turnover) if short_turnover else 0
+    
+    # 計算乖離率
+    bias20 = (p - ma20_num) / ma20_num * 100 if ma20_num > 0 else 0
+    
+    # 獲取大盤趨勢
+    hsi_trend, hsi_change, hsi_bullish = get_hsi_trend()
+    
+    # ========== MACD 狀態 ==========
+    st.subheader("📉 MACD 狀態")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("DIF", f"{dif:.4f}" if dif != 0 else "N/A")
+    with col2:
+        st.metric("DEA", f"{dea:.4f}" if dea != 0 else "N/A")
+    with col3:
+        st.metric("MACD柱", f"{dif - dea:.4f}" if dif != 0 or dea != 0 else "N/A")
+    
+    if dif > dea:
+        st.markdown('<div style="background-color:#00aa00; color:white; padding:5px; border-radius:5px">✅ 金叉 (黃金交叉)</div>', unsafe_allow_html=True)
+    elif dif < dea:
+        st.markdown('<div style="background-color:#aa0000; color:white; padding:5px; border-radius:5px">❌ 死叉 (死亡交叉)</div>', unsafe_allow_html=True)
+    else:
+        st.info("📊 MACD 持平")
     
     st.divider()
     
-    st.subheader("📉 MACD 狀態")
-    status, _ = get_macd_status(dif, dea)
-    if status == "金叉":
-        st.markdown('<div style="background-color:#00aa00; color:white; padding:5px; border-radius:5px">✅ 金叉 (黃金交叉)</div>', unsafe_allow_html=True)
-    elif status == "死叉":
-        st.markdown('<div style="background-color:#aa0000; color:white; padding:5px; border-radius:5px">❌ 死叉 (死亡交叉)</div>', unsafe_allow_html=True)
-    else:
-        st.info(f"📊 {status}")
-    
+    # ========== 交易信號 ==========
     st.subheader("🎯 交易信號")
+    
     cond1 = p > ma20_num if ma20_num > 0 else False
-    cond2 = r14 > 50 if r14 > 0 else False
+    cond2 = (r6 > 50) and (r14 > 50) and (r24 > 50)
     cond3 = dif > dea
     cond4 = to > 0.3 if to > 0 else False
     cond5 = -4 <= bias20 <= 5 if ma20_num > 0 else False
     
     total_score = sum([cond1, cond2, cond3, cond4, cond5])
+    
+    # 布林帶加分
+    if boll_lower_num > 0 and p < boll_lower_num:
+        total_score += 1
+        boll_signal = "🟢 跌破下軌，反彈機會"
+    elif boll_upper_num > 0 and p > boll_upper_num:
+        total_score -= 1
+        boll_signal = "🔴 突破上軌，可能過熱"
+    else:
+        boll_signal = "🟡 在通道內"
     
     if total_score >= 5:
         signal = "🔴 強烈買入"
@@ -579,49 +684,209 @@ elif st.session_state.page == "🔍 港股分析":
     
     st.markdown(f'<div style="background-color:{color}; color:#000; padding:10px; border-radius:5px; font-weight:bold; text-align:center">{signal}</div>', unsafe_allow_html=True)
     
-    st.subheader("📊 大盤趨勢過濾")
-    hsi_trend, hsi_change, hsi_bullish = get_hsi_trend()
-    if hsi_bullish is True:
-        st.success(f"✅ 大盤多頭趨勢 ({hsi_change:+.2f}%)")
-    elif hsi_bullish is False:
-        st.error(f"⚠️ 大盤空頭趨勢 ({hsi_change:+.2f}%)")
-    else:
-        st.warning(f"🟡 大盤盤整震盪 ({hsi_change:+.2f}%)")
+    st.divider()
     
+    # ========== 量價配合分析 ==========
+    st.subheader("📊 量價配合分析")
+    
+    # 獲取今日和前一日價格（需要從技術數據獲取）
+    if st.session_state.tech_data:
+        tech = st.session_state.tech_data
+        prev_close = tech.get('prev_close', p)
+        price_change = ((p - prev_close) / prev_close * 100) if prev_close > 0 else 0
+    else:
+        price_change = 0
+    
+    # 判斷量價關係
+    if p > 0 and to > 0:
+        if price_change > 0:
+            if to > 0.5:
+                vp_text = "✅ 價漲量增（健康上漲，動能充足）"
+                vp_color = "green"
+            elif to > 0.3:
+                vp_text = "🟡 價漲量平（上漲動能一般）"
+                vp_color = "yellow"
+            else:
+                vp_text = "⚠️ 價漲量縮（上漲乏力，可能反轉）"
+                vp_color = "orange"
+        elif price_change < 0:
+            if to > 0.5:
+                vp_text = "❌ 價跌量增（下跌動能強，風險較大）"
+                vp_color = "red"
+            elif to > 0.3:
+                vp_text = "🟡 價跌量平（下跌動能一般）"
+                vp_color = "yellow"
+            else:
+                vp_text = "✅ 價跌量縮（下跌動能減弱，可能止跌）"
+                vp_color = "green"
+        else:
+            vp_text = "⚪ 價格持平，量能參考意義有限"
+            vp_color = "gray"
+        
+        st.markdown(f'<div style="background-color:{vp_color}; color:white; padding:5px; border-radius:5px; text-align:center">{vp_text}</div>', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("今日成交額", f"{to:.2f}億")
+        with col2:
+            st.metric("價格變動", f"{price_change:+.2f}%")
+    else:
+        st.info("請輸入股價和成交額以分析量價配合")
+    
+    st.divider()
+    
+    # ========== 大盤趨勢過濾 ==========
+    st.subheader("📊 大盤趨勢過濾")
+    if hsi_trend:
+        if hsi_bullish is True:
+            st.markdown('<div style="background-color:#00aa00; color:white; padding:5px; border-radius:5px; text-align:center">✅ 大盤多頭趨勢，適合積極操作</div>', unsafe_allow_html=True)
+        elif hsi_bullish is False:
+            st.markdown('<div style="background-color:#aa0000; color:white; padding:5px; border-radius:5px; text-align:center">⚠️ 大盤空頭趨勢，建議保守操作</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="background-color:#ffaa00; color:#000; padding:5px; border-radius:5px; text-align:center">🟡 大盤盤整震盪，選擇性操作</div>', unsafe_allow_html=True)
+        st.metric("恆指近期表現", f"{hsi_change:+.2f}%")
+    else:
+        st.info("無法獲取大盤數據")
+    
+    st.divider()
+    
+    # ========== 風險報酬比計算 ==========
     st.subheader("📊 風險報酬比計算")
+    
     col1, col2, col3 = st.columns(3)
     with col1:
-        target_price = st.number_input("目標價", value=None, step=0.1, format="%.2f", placeholder="目標價")
+        target_price = st.number_input("目標價", value=None, step=0.1, format="%.3f", placeholder="目標價", key="target_price")
     with col2:
-        stop_loss = st.number_input("止損價", value=None, step=0.1, format="%.2f", placeholder="止損價")
+        stop_loss_price = st.number_input("止損價", value=None, step=0.1, format="%.3f", placeholder="止損價", key="stop_loss_price")
     with col3:
-        entry_price = st.number_input("入場價", value=p if p > 0 else None, step=0.1, format="%.2f", placeholder="入場價")
+        entry_price = st.number_input("入場價", value=p if p > 0 else None, step=0.1, format="%.3f", placeholder="入場價", key="entry_price")
     
-    if target_price and target_price > 0 and stop_loss and stop_loss > 0 and entry_price and entry_price > 0:
-        rr_ratio, risk_pct, reward_pct = calculate_risk_reward(entry_price, target_price, stop_loss)
+    if target_price and target_price > 0 and stop_loss_price and stop_loss_price > 0 and entry_price and entry_price > 0:
+        rr_ratio, risk_pct, reward_pct = calculate_risk_reward(entry_price, target_price, stop_loss_price)
         if rr_ratio:
-            st.metric("風險報酬比", f"1 : {rr_ratio:.2f}")
-            if rr_ratio >= 2:
-                st.success("✅ 符合標準 (≥2)")
-            elif rr_ratio >= 1:
-                st.warning("🟡 尚可 (1~2)")
-            else:
-                st.error("❌ 風險過高 (<1)")
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("風險報酬比", f"1 : {rr_ratio:.2f}")
+            with col2:
+                st.metric("潛在虧損", f"{risk_pct:.2f}%")
+            with col3:
+                st.metric("潛在獲利", f"{reward_pct:.2f}%")
+            with col4:
+                if rr_ratio >= 2:
+                    st.success("✅ 符合標準 (≥2)")
+                elif rr_ratio >= 1:
+                    st.warning("🟡 尚可 (1~2)")
+                else:
+                    st.error("❌ 風險過高 (<1)")
+    else:
+        st.info("請輸入目標價、止損價和入場價以計算風險報酬比")
     
+    st.divider()
+    
+    # ========== 止損建議 ==========
     st.subheader("🛡️ 止損建議")
-    entry_price_input = st.number_input("你的買入價", value=None, step=0.1, format="%.2f", placeholder="留空則用 MA20")
+    entry_price_input = st.number_input("你的買入價 (若已持倉)", value=None, step=0.1, format="%.3f", placeholder="留空則使用 MA20", key="entry_price_stop")
     stop_loss, stop_loss_pct, distance_pct, method = get_stop_loss_suggestion(p, ma20_num, entry_price_input if entry_price_input else None)
     if stop_loss:
-        st.metric("建議止損價", f"${stop_loss:.2f}")
-        st.caption(f"📌 {method}")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("建議止損價", f"${stop_loss:.2f}")
+        with col2:
+            st.metric("止損幅度", f"{stop_loss_pct:.1f}%")
+        with col3:
+            if distance_pct < 0:
+                st.metric("距離止損", f"{distance_pct:.1f}%", delta="⚠️ 已接近止損", delta_color="inverse")
+            else:
+                st.metric("距離止損", f"{distance_pct:.1f}%")
+        st.caption(f"📌 計算方式：{method}")
+    else:
+        st.info("請輸入 MA20 或買入價以計算止損")
     
+    st.divider()
+    
+    # ========== 5項條件詳細判斷 ==========
     with st.expander("📋 5項條件詳細判斷"):
-        st.write(f"① 股價 > 20天線: {p:.2f} > {ma20_num:.2f} → {'✅' if p > ma20_num else '❌'}")
-        st.write(f"② RSI(14) > 50: {r14:.1f} > 50 → {'✅' if r14 > 50 else '❌'}")
-        st.write(f"③ MACD 金叉: {dif:.4f} > {dea:.4f} → {'✅' if dif > dea else '❌'}")
-        st.write(f"④ 成交額 > 0.3億: {to:.2f} > 0.3 → {'✅' if to > 0.3 else '❌'}")
-        st.write(f"⑤ 乖離率 -4%~+5%: {bias20:.2f}% → {'✅' if -4 <= bias20 <= 5 else '❌'}")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"① 股價 > 20天線: {p:.2f} > {ma20_num:.2f} → {'✅' if p > ma20_num else '❌' if ma20_num > 0 else '⚠️ 無數據'}")
+            st.write(f"② RSI(6/14/24) > 50: {r6:.2f}/{r14:.2f}/{r24:.2f} → {'✅' if (r6>50 and r14>50 and r24>50) else '❌' if (r6>0 or r14>0 or r24>0) else '⚠️ 無數據'}")
+            st.write(f"③ MACD 金叉: {dif:.4f} > {dea:.4f} → {'✅' if dif > dea else '❌' if dif != 0 or dea != 0 else '⚠️ 無數據'}")
+        with col2:
+            st.write(f"④ 成交額 > 0.3億: {to:.2f} > 0.3 → {'✅' if to > 0.3 else '❌' if to > 0 else '⚠️ 無數據'}")
+            st.write(f"⑤ 乖離率(20) -4% ~ +5%: {bias20:.2f}% → {'✅' if -4 <= bias20 <= 5 else '❌' if ma20_num > 0 else '⚠️ 無數據'}")
+        if boll_upper_num > 0 and boll_lower_num > 0:
+            st.write(f"⑥ 布林帶: {boll_signal}")
+    
+    st.divider()
+    
+    # ========== 數據匯出與 AI 分析 ==========
+    st.subheader("📎 數據匯出與 AI 分析")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📎 產生 Excel 報告", use_container_width=True, type="primary"):
+            export_data = {
+                '股票代碼': st.session_state.get('current_stock', ''),
+                '股票名稱': st.session_state.get('hk_stock_name', ''),
+                '股價': p,
+                '成交額(億)': to,
+                'MA5': ma5_num, 'MA10': ma10_num, 'MA15': ma15_num,
+                'MA20': ma20_num, 'MA50': ma50_num, 'MA60': ma60_num, 'MA250': ma250_num,
+                'BOLL上軌': boll_upper_num, 'BOLL中軌': boll_mid_num, 'BOLL下軌': boll_lower_num,
+                'RSI6': r6, 'RSI14': r14, 'RSI24': r24,
+                'MACD DIF': dif, 'MACD DEA': dea, 'MACD柱': hist,
+                'KDJ_K': kk, 'KDJ_D': dd, 'KDJ_J': jj,
+                '交易信號': signal
+            }
+            df = pd.DataFrame([export_data])
+            filename = f"港股分析_{st.session_state.get('current_stock', '')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            filepath = os.path.join(EXPORT_FOLDER, filename)
+            df.to_excel(filepath, index=False)
+            st.success(f"✅ Excel 已儲存: {filepath}")
+            with open(filepath, "rb") as f:
+                excel_data = f.read()
+            st.download_button(label="📥 點擊下載 Excel", data=excel_data, file_name=os.path.basename(filepath), mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+    
+    with col2:
+        wl = load_watchlist()
+        if st.session_state.current_stock in wl:
+            st.button("⭐ 已加入自選股", disabled=True, use_container_width=True)
+        else:
+            if st.button("➕ 加入自選股", use_container_width=True):
+                wl.append(st.session_state.current_stock)
+                save_watchlist(wl)
+                st.success("✅ 已加入自選股")
+                st.rerun()
+    
+    with st.expander("📋 點擊展開 AI 分析指令（複製後貼到 DeepSeek）"):
+        ai_instruction = f"""📊 港股分析報告 - {st.session_state.current_stock} {st.session_state.hk_stock_name}
 
+【分析日期】{datetime.now().strftime('%Y-%m-%d %H:%M')}
+
+【基本數據】
+- 股價：${p:.2f}
+- 成交額：{to:.2f}億
+
+【技術指標】
+- MA20：${ma20_num:.2f}
+- RSI14：{r14:.1f}
+- MACD：DIF={dif:.4f}, DEA={dea:.4f}
+- 乖離率：{bias20:.2f}%
+
+【五項條件判斷】
+- 股價 > 20天線：{'✅' if p > ma20_num else '❌'}
+- RSI14 > 50：{'✅' if r14 > 50 else '❌'}
+- MACD 金叉：{'✅' if dif > dea else '❌'}
+- 成交額 > 0.3億：{'✅' if to > 0.3 else '❌'}
+- 乖離率 -4% ~ +5%：{'✅' if -4 <= bias20 <= 5 else '❌'}
+
+【交易信號】
+{signal}
+
+請根據以上數據提供專業分析建議。"""
+        st.code(ai_instruction, language="markdown", line_numbers=False)
+        st.caption("💡 提示：點擊右上角複製圖標複製指令 → 貼到 DeepSeek 即可獲得 AI 分析")
+        
 # 2. 自選股頁面
 elif st.session_state.page == "⭐ 自選股":
     st.markdown("# ⭐ 自選股")
