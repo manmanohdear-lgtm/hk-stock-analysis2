@@ -41,6 +41,8 @@ if __name__ == "__main__":
 # ==================== 檢測程式碼結束 ====================
 
 import streamlit as st
+import sys
+sys.setrecursionlimit(1000000)
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -893,7 +895,13 @@ def run_screening(progress_bar, status_text):
     stocks['成交额'] = pd.to_numeric(stocks['成交额'], errors='coerce')
     stocks['最新价'] = pd.to_numeric(stocks['最新价'], errors='coerce')
     stocks = stocks[(stocks['成交额'] > 30000000) & (stocks['最新价'] > 1)]
+
+        stocks = stocks[(stocks['成交额'] > 30000000) & (stocks['最新价'] > 1)]
     
+    if stocks.empty:
+        status_text.text("沒有符合基本條件的股票")
+        return pd.DataFrame()
+        
     if stocks.empty:
         status_text.text("沒有符合基本條件的股票")
         return pd.DataFrame()
