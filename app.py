@@ -145,11 +145,15 @@ def get_stop_loss_suggestion(price, ma20, entry_price=None):
     distance_pct = (stop_loss - price) / price * 100 if price > 0 else 0
     return stop_loss, stop_loss_pct, distance_pct, method
 
-# ==================== 技術數據獲取 ====================
+# ==================== 技術數據獲取（加強版）====================
 def get_tech_data(code):
+    """獲取股票技術數據，加入錯誤處理"""
     try:
+        # 先嚐試獲取數據
         df = ak.stock_hk_daily(symbol=code, adjust='qfq')
-        if df is None or len(df) < 20:
+        
+        if df is None or df.empty or len(df) < 20:
+            print(f"⚠️ {code} 數據不足")
             return None
         
         df = df.sort_values('date')
@@ -159,9 +163,14 @@ def get_tech_data(code):
         lows = df['low'].values
         turnovers = df['turnover'].values if 'turnover' in df.columns else df['volume'].values * closes
         
+        if len(closes) < 20:
+            return None
+        
         price = closes[-1]
         open_price = opens[-1]
         prev_close = closes[-2] if len(closes) >= 2 else price
+        
+        # 移動平均線
         ma5 = np.mean(closes[-5:]) if len(closes) >= 5 else price
         ma10 = np.mean(closes[-10:]) if len(closes) >= 10 else price
         ma15 = np.mean(closes[-15:]) if len(closes) >= 15 else price
@@ -179,24 +188,28 @@ def get_tech_data(code):
         boll_lower = boll_mid - 2 * boll_std
         
         # RSI
+        rsi6 = 50
+        rsi14 = 50
+        rsi24 = 50
         if len(closes) >= 15:
             deltas = np.diff(closes[-15:])
             gains = np.where(deltas > 0, deltas, 0)
             losses = np.where(deltas < 0, -deltas, 0)
             avg_gain = np.mean(gains[-14:]) if len(gains) >= 14 else 0
             avg_loss = np.mean(losses[-14:]) if len(losses) >= 14 else 0
-            rsi14 = 100 - (100 / (1 + avg_gain/avg_loss)) if avg_loss > 0 else 100
-        else:
-            rsi14 = 50
-        
-        # 簡化 RSI6 和 RSI24
-        rsi6 = rsi14
-        rsi24 = rsi14
+            if avg_loss > 0:
+                rsi14 = 100 - (100 / (1 + avg_gain/avg_loss))
+            else:
+                rsi14 = 100
+            rsi6 = rsi14
+            rsi24 = rsi14
         
         bias20 = (price - ma20) / ma20 * 100 if ma20 > 0 else 0
-        current_turnover = turnovers[-1] / 100000000
+        current_turnover = turnovers[-1] / 100000000 if len(turnovers) > 0 else 0
         
         # MACD
+        macd_dif = 0
+        macd_dea = 0
         if len(closes) >= 26:
             exp1 = pd.Series(closes).ewm(span=12, adjust=False).mean()
             exp2 = pd.Series(closes).ewm(span=26, adjust=False).mean()
@@ -204,36 +217,52 @@ def get_tech_data(code):
             dea = dif.ewm(span=9, adjust=False).mean()
             macd_dif = dif.iloc[-1]
             macd_dea = dea.iloc[-1]
-        else:
-            macd_dif = 0
-            macd_dea = 0
         
         # KDJ
+        k, d, j = 50, 50, 50
         if len(closes) >= 9:
             low_9 = np.min(lows[-9:])
             high_9 = np.max(highs[-9:])
-            rsv = (price - low_9) / (high_9 - low_9) * 100 if high_9 > low_9 else 50
+            if high_9 > low_9:
+                rsv = (price - low_9) / (high_9 - low_9) * 100
+            else:
+                rsv = 50
             k = 2/3 * 50 + 1/3 * rsv
             d = 2/3 * 50 + 1/3 * k
             j = 3 * k - 2 * d
-        else:
-            k, d, j = 50, 50, 50
         
         return {
-            'price': price, 'open': open_price, 'prev_close': prev_close,
-            'high': highs[-1], 'low': lows[-1],
-            'ma5': ma5, 'ma10': ma10, 'ma15': ma15, 'ma20': ma20,
-            'ma50': ma50, 'ma60': ma60, 'ma250': ma250,
-            'boll_upper': boll_upper, 'boll_mid': boll_mid, 'boll_lower': boll_lower,
-            'rsi6': rsi6, 'rsi14': rsi14, 'rsi24': rsi24,
-            'macd_dif': macd_dif, 'macd_dea': macd_dea,
-            'kdj_k': k, 'kdj_d': d, 'kdj_j': j,
-            'bias20': bias20, 'turnover': current_turnover,
+            'price': price,
+            'open': open_price,
+            'prev_close': prev_close,
+            'high': highs[-1],
+            'low': lows[-1],
+            'ma5': ma5,
+            'ma10': ma10,
+            'ma15': ma15,
+            'ma20': ma20,
+            'ma50': ma50,
+            'ma60': ma60,
+            'ma250': ma250,
+            'boll_upper': boll_upper,
+            'boll_mid': boll_mid,
+            'boll_lower': boll_lower,
+            'rsi6': rsi6,
+            'rsi14': rsi14,
+            'rsi24': rsi24,
+            'macd_dif': macd_dif,
+            'macd_dea': macd_dea,
+            'kdj_k': k,
+            'kdj_d': d,
+            'kdj_j': j,
+            'bias20': bias20,
+            'turnover': current_turnover,
             'success': True
         }
     except Exception as e:
+        print(f"獲取 {code} 數據失敗: {e}")
         return None
-
+        
 # ==================== 每日選股函數（雲端優化版）====================
 def run_screening(progress_bar, status_text):
     if not AKSHARE_AVAILABLE:
@@ -361,8 +390,10 @@ def perform_search(code):
     if norm not in [h['code'] for h in st.session_state.search_history]:
         st.session_state.search_history.append({'code': norm, 'time': datetime.now().strftime('%H:%M:%S')})
     
-    tech = get_tech_data(norm)
-    if tech:
+    with st.spinner(f"正在獲取 {norm} 數據..."):
+        tech = get_tech_data(norm)
+        
+    if tech and tech.get('success'):
         st.session_state.hk_stock_name = code
         st.session_state.hk_stock_price = tech['price']
         st.session_state.hk_stock_turnover = tech['turnover']
@@ -389,11 +420,13 @@ def perform_search(code):
         st.session_state.kdj_d = f"{tech['kdj_d']:.1f}"
         st.session_state.kdj_j = f"{tech['kdj_j']:.1f}"
         
-        st.success(f"✅ 已載入 {norm} 股價: ${tech['price']:.2f}")
+        st.success(f"✅ 已載入 {norm} ({code}) 股價: ${tech['price']:.2f}")
+        st.rerun()
     else:
-        st.warning(f"無法獲取 {norm} 數據")
-    st.rerun()
-
+        st.error(f"❌ 無法獲取 {norm} 數據")
+        st.info("可能原因：1. 股票代碼錯誤 2. 網路問題 3. akshare 數據源暫時不可用")
+        st.info("💡 提示：你可以手動輸入技術指標進行分析")
+        
 # ==================== 初始化 Session State ====================
 if 'page' not in st.session_state:
     st.session_state.page = "📋 每日工作流"
