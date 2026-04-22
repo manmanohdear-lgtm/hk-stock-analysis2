@@ -42,7 +42,6 @@ MOCK_STOCK_DATA = {
 }
 
 def get_mock_stock_data(code):
-    """獲取測試數據"""
     code = code.upper().strip()
     if code in MOCK_STOCK_DATA:
         return MOCK_STOCK_DATA[code]
@@ -94,6 +93,8 @@ if 'macd_dif' not in st.session_state:
     st.session_state.macd_dif = ""
 if 'macd_dea' not in st.session_state:
     st.session_state.macd_dea = ""
+if 'macd_hist' not in st.session_state:
+    st.session_state.macd_hist = ""
 if 'kdj_k' not in st.session_state:
     st.session_state.kdj_k = ""
 if 'kdj_d' not in st.session_state:
@@ -151,6 +152,7 @@ with col2:
             st.session_state.rsi24 = str(data['rsi24'])
             st.session_state.macd_dif = str(data['macd_dif'])
             st.session_state.macd_dea = str(data['macd_dea'])
+            st.session_state.macd_hist = f"{data['macd_dif'] - data['macd_dea']:.4f}"
             st.session_state.kdj_k = str(data['kdj_k'])
             st.session_state.kdj_d = str(data['kdj_d'])
             st.session_state.kdj_j = str(data['kdj_j'])
@@ -158,7 +160,7 @@ with col2:
 
 st.divider()
 
-# 基本數據
+# 顯示數據
 if st.session_state.stock_data:
     data = st.session_state.stock_data
     
@@ -172,8 +174,8 @@ if st.session_state.stock_data:
         st.metric("成交額", f"{data['turnover']:.1f}億")
     with col4:
         st.caption("52週高/低")
-        high_52w = st.number_input("52週高", value=None, step=0.1, format="%.2f", placeholder="高", key="high_52w", label_visibility="collapsed")
-        low_52w = st.number_input("52週低", value=None, step=0.1, format="%.2f", placeholder="低", key="low_52w", label_visibility="collapsed")
+        st.number_input("52週高", value=None, step=0.1, format="%.2f", placeholder="高", key="high_52w", label_visibility="collapsed")
+        st.number_input("52週低", value=None, step=0.1, format="%.2f", placeholder="低", key="low_52w", label_visibility="collapsed")
     
     st.caption("💡 做空數據（選填）")
     col1, col2 = st.columns(2)
@@ -190,19 +192,19 @@ if st.session_state.stock_data:
     
     col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     with col1:
-        ma5 = st.text_input("MA5", value=st.session_state.ma5, placeholder="0", key="ma5")
+        st.text_input("MA5", value=st.session_state.ma5, placeholder="0", key="ma5")
     with col2:
-        ma10 = st.text_input("MA10", value=st.session_state.ma10, placeholder="0", key="ma10")
+        st.text_input("MA10", value=st.session_state.ma10, placeholder="0", key="ma10")
     with col3:
-        ma15 = st.text_input("MA15", value=st.session_state.ma15, placeholder="0", key="ma15")
+        st.text_input("MA15", value=st.session_state.ma15, placeholder="0", key="ma15")
     with col4:
-        ma20 = st.text_input("MA20", value=st.session_state.ma20, placeholder="0", key="ma20")
+        st.text_input("MA20", value=st.session_state.ma20, placeholder="0", key="ma20")
     with col5:
-        ma50 = st.text_input("MA50", value=st.session_state.ma50, placeholder="0", key="ma50")
+        st.text_input("MA50", value=st.session_state.ma50, placeholder="0", key="ma50")
     with col6:
-        ma60 = st.text_input("MA60", value=st.session_state.ma60, placeholder="0", key="ma60")
+        st.text_input("MA60", value=st.session_state.ma60, placeholder="0", key="ma60")
     with col7:
-        ma250 = st.text_input("MA250", value=st.session_state.ma250, placeholder="0", key="ma250")
+        st.text_input("MA250", value=st.session_state.ma250, placeholder="0", key="ma250")
     
     st.divider()
     
@@ -210,11 +212,11 @@ if st.session_state.stock_data:
     st.subheader("📊 布林帶 (BOLL 20,2)")
     col1, col2, col3 = st.columns(3)
     with col1:
-        boll_upper = st.text_input("BOLL上軌", value=st.session_state.boll_upper, placeholder="0", key="boll_upper")
+        st.text_input("BOLL上軌", value=st.session_state.boll_upper, placeholder="0", key="boll_upper")
     with col2:
-        boll_mid = st.text_input("BOLL中軌", value=st.session_state.boll_mid, placeholder="0", key="boll_mid")
+        st.text_input("BOLL中軌", value=st.session_state.boll_mid, placeholder="0", key="boll_mid")
     with col3:
-        boll_lower = st.text_input("BOLL下軌", value=st.session_state.boll_lower, placeholder="0", key="boll_lower")
+        st.text_input("BOLL下軌", value=st.session_state.boll_lower, placeholder="0", key="boll_lower")
     
     st.divider()
     
@@ -222,11 +224,11 @@ if st.session_state.stock_data:
     st.subheader("📊 RSI (相對強弱指數)")
     col1, col2, col3 = st.columns(3)
     with col1:
-        rsi6 = st.text_input("RSI(6)", value=st.session_state.rsi6, placeholder="0", key="rsi6")
+        st.text_input("RSI(6)", value=st.session_state.rsi6, placeholder="0", key="rsi6")
     with col2:
-        rsi14 = st.text_input("RSI(14)", value=st.session_state.rsi14, placeholder="0", key="rsi14")
+        st.text_input("RSI(14)", value=st.session_state.rsi14, placeholder="0", key="rsi14")
     with col3:
-        rsi24 = st.text_input("RSI(24)", value=st.session_state.rsi24, placeholder="0", key="rsi24")
+        st.text_input("RSI(24)", value=st.session_state.rsi24, placeholder="0", key="rsi24")
     
     st.divider()
     
@@ -234,9 +236,9 @@ if st.session_state.stock_data:
     st.subheader("📉 MACD (12,26,9)")
     col1, col2, col3 = st.columns(3)
     with col1:
-        macd_dif = st.text_input("DIF", value=st.session_state.macd_dif, placeholder="0", key="macd_dif")
+        st.text_input("DIF", value=st.session_state.macd_dif, placeholder="0", key="macd_dif")
     with col2:
-        macd_dea = st.text_input("DEA", value=st.session_state.macd_dea, placeholder="0", key="macd_dea")
+        st.text_input("DEA", value=st.session_state.macd_dea, placeholder="0", key="macd_dea")
     with col3:
         st.text_input("MACD柱", value=st.session_state.macd_hist, placeholder="0", key="macd_hist", disabled=True)
     
@@ -246,24 +248,24 @@ if st.session_state.stock_data:
     st.subheader("📈 KDJ (9,3,3)")
     col1, col2, col3 = st.columns(3)
     with col1:
-        kdj_k = st.text_input("K值", value=st.session_state.kdj_k, placeholder="0", key="kdj_k")
+        st.text_input("K值", value=st.session_state.kdj_k, placeholder="0", key="kdj_k")
     with col2:
-        kdj_d = st.text_input("D值", value=st.session_state.kdj_d, placeholder="0", key="kdj_d")
+        st.text_input("D值", value=st.session_state.kdj_d, placeholder="0", key="kdj_d")
     with col3:
-        kdj_j = st.text_input("J值", value=st.session_state.kdj_j, placeholder="0", key="kdj_j")
+        st.text_input("J值", value=st.session_state.kdj_j, placeholder="0", key="kdj_j")
     
     st.divider()
     
     # 解析數值
     p = price if isinstance(price, (int, float)) else data['price']
-    ma20_num = parse_number(ma20)
-    r14 = parse_number(rsi14)
-    dif = parse_number(macd_dif)
-    dea = parse_number(macd_dea)
+    ma20_num = parse_number(st.session_state.ma20)
+    r14 = parse_number(st.session_state.rsi14)
+    dif = parse_number(st.session_state.macd_dif)
+    dea = parse_number(st.session_state.macd_dea)
     to = data['turnover']
     bias20 = (p - ma20_num) / ma20_num * 100 if ma20_num > 0 else 0
-    boll_upper_num = parse_number(boll_upper)
-    boll_lower_num = parse_number(boll_lower)
+    boll_upper_num = parse_number(st.session_state.boll_upper)
+    boll_lower_num = parse_number(st.session_state.boll_lower)
     
     # MACD 狀態
     st.subheader("📉 MACD 狀態")
@@ -295,15 +297,10 @@ if st.session_state.stock_data:
     
     total_score = sum([cond1, cond2, cond3, cond4])
     
-    # 布林帶加分
     if boll_lower_num > 0 and p < boll_lower_num:
         total_score += 1
-        boll_signal = "🟢 跌破下軌，反彈機會"
     elif boll_upper_num > 0 and p > boll_upper_num:
         total_score -= 1
-        boll_signal = "🔴 突破上軌，可能過熱"
-    else:
-        boll_signal = "🟡 在通道內"
     
     if total_score >= 5:
         signal = "🔴 強烈買入"
@@ -332,7 +329,12 @@ if st.session_state.stock_data:
         st.write(f"③ MACD 金叉: {dif:.4f} > {dea:.4f} → {'✅' if cond3 else '❌'}")
         st.write(f"④ 成交額 > 0.3億: {to:.2f} > 0.3 → {'✅' if cond4 else '❌'}")
         if boll_upper_num > 0 and boll_lower_num > 0:
-            st.write(f"⑤ 布林帶: {boll_signal}")
+            if p < boll_lower_num:
+                st.write(f"⑤ 布林帶: 🟢 跌破下軌，反彈機會")
+            elif p > boll_upper_num:
+                st.write(f"⑤ 布林帶: 🔴 突破上軌，可能過熱")
+            else:
+                st.write(f"⑤ 布林帶: 🟡 在通道內")
     
 else:
     st.info("請輸入股票代碼並點擊「載入數據」開始分析")
@@ -347,6 +349,5 @@ else:
     | 01024 | 快手 |
     """)
 
-# ==================== 頁腳 ====================
 st.divider()
 st.caption("📌 測試版本 | 使用模擬數據 | 正式版將連接真實數據源")
