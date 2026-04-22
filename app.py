@@ -145,30 +145,35 @@ def get_stop_loss_suggestion(price, ma20, entry_price=None):
     distance_pct = (stop_loss - price) / price * 100 if price > 0 else 0
     return stop_loss, stop_loss_pct, distance_pct, method
 
-# ==================== 技術數據獲取（加強版）====================
+# ==================== 技術數據獲取（使用 yfinance）====================
 def get_tech_data(code):
-    """獲取股票技術數據，加入錯誤處理"""
+    """使用 yfinance 獲取港股技術數據"""
     try:
-        # 先嚐試獲取數據
-        df = ak.stock_hk_daily(symbol=code, adjust='qfq')
+        # 轉換為 yfinance 格式 (5位數字 + .HK)
+        code_clean = re.sub(r'[^0-9]', '', str(code))
+        if not code_clean:
+            return None
+        yf_code = f"{code_clean.zfill(4)}.HK"
         
-        if df is None or df.empty or len(df) < 20:
+        # 獲取歷史數據
+        ticker = yf.Ticker(yf_code)
+        hist = ticker.history(period="6mo")
+        
+        if hist is None or hist.empty or len(hist) < 20:
             print(f"⚠️ {code} 數據不足")
             return None
         
-        df = df.sort_values('date')
-        closes = df['close'].values
-        opens = df['open'].values
-        highs = df['high'].values
-        lows = df['low'].values
-        turnovers = df['turnover'].values if 'turnover' in df.columns else df['volume'].values * closes
-        
-        if len(closes) < 20:
-            return None
+        closes = hist['Close'].values
+        opens = hist['Open'].values
+        highs = hist['High'].values
+        lows = hist['Low'].values
+        volumes = hist['Volume'].values
         
         price = closes[-1]
         open_price = opens[-1]
         prev_close = closes[-2] if len(closes) >= 2 else price
+        volume = volumes[-1]
+        turnover = (price * volume) / 100000000 if price > 0 else 0
         
         # 移動平均線
         ma5 = np.mean(closes[-5:]) if len(closes) >= 5 else price
@@ -205,7 +210,6 @@ def get_tech_data(code):
             rsi24 = rsi14
         
         bias20 = (price - ma20) / ma20 * 100 if ma20 > 0 else 0
-        current_turnover = turnovers[-1] / 100000000 if len(turnovers) > 0 else 0
         
         # MACD
         macd_dif = 0
@@ -256,7 +260,7 @@ def get_tech_data(code):
             'kdj_d': d,
             'kdj_j': j,
             'bias20': bias20,
-            'turnover': current_turnover,
+            'turnover': turnover,
             'success': True
         }
     except Exception as e:
