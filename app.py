@@ -495,11 +495,13 @@ def perform_search(code):
         st.session_state.kdj_d = f"{tech['kdj_d']:.1f}"
         st.session_state.kdj_j = f"{tech['kdj_j']:.1f}"
         
-        st.success(f"✅ 已載入 {norm} ({code}) 股價: ${tech['price']:.2f}")
+        if tech.get('is_mock'):
+            st.warning(f"⚠️ 使用模擬數據（無法獲取 {norm} 真實數據）")
+        else:
+            st.success(f"✅ 已載入 {norm} ({code}) 股價: ${tech['price']:.2f}")
         st.rerun()
     else:
         st.error(f"❌ 無法獲取 {norm} 數據")
-        st.info("可能原因：1. 股票代碼錯誤 2. 網路問題 3. akshare 數據源暫時不可用")
         st.info("💡 提示：你可以手動輸入技術指標進行分析")
         
 # ==================== 初始化 Session State ====================
